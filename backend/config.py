@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     POLYMARKET_PRIVATE_KEY: str = ""
     POLYMARKET_API_KEY: str = ""
     POLYMARKET_API_SECRET: str = ""
+    POLYMARKET_API_PASSPHRASE: str = ""
+    POLYMARKET_FUNDER: str = ""
 
     # Database
     DATABASE_URL: str = "sqlite:///./polyhunter.db"
