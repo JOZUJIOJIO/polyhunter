@@ -10,6 +10,8 @@ dependencies = [
     "pydantic-settings>=2.0",
     "apscheduler>=3.10",
     "py-clob-client>=0.34",
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
 ]
 
 [project.optional-dependencies]
