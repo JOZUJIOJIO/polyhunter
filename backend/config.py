@@ -29,5 +29,10 @@ class Settings(BaseSettings):
 
     # Phase 2: AI
     ANTHROPIC_API_KEY: str = ""
+    AI_EDGE_THRESHOLD_PCT: float = 10.0
+    AI_MIN_VOLUME_24H: float = 5000.0
+    AI_MIN_LIQUIDITY: float = 1000.0
+    AI_MAX_MARKETS_PER_RUN: int = 20
+    AI_REQUEST_DELAY_SECONDS: float = 1.0
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
