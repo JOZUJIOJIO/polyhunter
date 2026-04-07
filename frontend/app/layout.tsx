@@ -6,8 +6,8 @@ import { Sidebar } from "@/components/sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PolyHunter - Polymarket Trading Dashboard",
-  description: "Quantitative trading system for Polymarket prediction markets",
+  title: "PolyHunter - Polymarket 量化交易仪表盘",
+  description: "Polymarket 预测市场量化交易系统",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className={inter.className}>
         <div className="flex min-h-screen">
           <Sidebar />

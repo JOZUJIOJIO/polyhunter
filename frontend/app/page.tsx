@@ -45,58 +45,57 @@ export default function OverviewPage() {
       if (ov) setOverview(ov);
       setSignals(sig as Signal[]);
       setPositions(pos as Position[]);
-    }).catch(() => setError("Failed to load dashboard data"));
+    }).catch(() => setError("加载数据失败"));
   }, []);
 
   if (error) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">{error}</p>
-        <p className="text-sm text-muted-foreground mt-2">Make sure the backend is running on port 8000</p>
+        <p className="text-sm text-muted-foreground mt-2">请确保后端服务运行在 8000 端口</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Overview</h2>
+      <h2 className="text-2xl font-bold">总览</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Unrealized PnL"
+          title="浮动盈亏"
           value={overview ? `$${overview.unrealized_pnl.toFixed(2)}` : "$0.00"}
           icon={overview && overview.unrealized_pnl >= 0 ? TrendingUp : TrendingDown}
           trend={overview ? (overview.unrealized_pnl >= 0 ? "up" : "down") : "neutral"}
         />
         <StatCard
-          title="Realized PnL"
+          title="已实现盈亏"
           value={overview ? `$${overview.realized_pnl.toFixed(2)}` : "$0.00"}
           icon={Target}
           trend={overview ? (overview.realized_pnl >= 0 ? "up" : "down") : "neutral"}
         />
         <StatCard
-          title="Active Positions"
+          title="活跃持仓"
           value={overview ? String(overview.active_positions) : "0"}
           icon={Briefcase}
         />
         <StatCard
-          title="Win Rate"
+          title="胜率"
           value={overview ? `${(overview.win_rate * 100).toFixed(1)}%` : "0.0%"}
           icon={BarChart3}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Signals */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="h-5 w-5" /> Recent Signals
+              <Zap className="h-5 w-5" /> 最新信号
             </CardTitle>
           </CardHeader>
           <CardContent>
             {signals.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active signals</p>
+              <p className="text-sm text-muted-foreground">暂无活跃信号</p>
             ) : (
               <div className="space-y-3">
                 {signals.map((s) => (
@@ -104,11 +103,11 @@ export default function OverviewPage() {
                     <div>
                       <p className="text-sm font-medium truncate max-w-xs">{s.market_question}</p>
                       <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">{s.type}</Badge>
-                        <span className="text-xs text-muted-foreground">Edge: {s.edge_pct}%</span>
+                        <Badge variant="outline" className="text-xs">{s.type === "ARBITRAGE" ? "套利" : "异动"}</Badge>
+                        <span className="text-xs text-muted-foreground">边际: {s.edge_pct}%</span>
                       </div>
                     </div>
-                    <Badge className="text-xs">{s.confidence}%</Badge>
+                    <Badge className="text-xs">置信度 {s.confidence}%</Badge>
                   </div>
                 ))}
               </div>
@@ -116,16 +115,15 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Active Positions */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Briefcase className="h-5 w-5" /> Active Positions
+              <Briefcase className="h-5 w-5" /> 活跃持仓
             </CardTitle>
           </CardHeader>
           <CardContent>
             {positions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No open positions</p>
+              <p className="text-sm text-muted-foreground">暂无持仓</p>
             ) : (
               <div className="space-y-3">
                 {positions.map((p) => (

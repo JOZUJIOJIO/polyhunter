@@ -1,16 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import type { Market } from "@/lib/types";
@@ -35,11 +30,11 @@ export default function MarketsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Markets</h2>
+        <h2 className="text-2xl font-bold">市场</h2>
         <div className="relative w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search markets..."
+            placeholder="搜索市场..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -52,26 +47,22 @@ export default function MarketsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40%]">Market</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead className="w-[40%]">市场</TableHead>
+                <TableHead>分类</TableHead>
                 <TableHead className="text-right">YES</TableHead>
                 <TableHead className="text-right">NO</TableHead>
-                <TableHead className="text-right">Volume 24h</TableHead>
-                <TableHead className="text-right">Liquidity</TableHead>
+                <TableHead className="text-right">24h 成交量</TableHead>
+                <TableHead className="text-right">流动性</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Loading...
-                  </TableCell>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">加载中...</TableCell>
                 </TableRow>
               ) : markets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No markets found
-                  </TableCell>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">未找到市场</TableCell>
                 </TableRow>
               ) : (
                 markets.map((m) => (
@@ -80,7 +71,7 @@ export default function MarketsPage() {
                       <p className="font-medium text-sm truncate max-w-md">{m.question}</p>
                       {m.end_date && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Ends: {new Date(m.end_date).toLocaleDateString()}
+                          到期: {new Date(m.end_date).toLocaleDateString("zh-CN")}
                         </p>
                       )}
                     </TableCell>

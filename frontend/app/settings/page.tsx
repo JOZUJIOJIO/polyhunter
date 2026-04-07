@@ -30,113 +30,81 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <h2 className="text-2xl font-bold flex items-center gap-2">
-        <Settings className="h-6 w-6" /> Settings
+        <Settings className="h-6 w-6" /> 设置
       </h2>
 
-      {/* Risk Management */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Shield className="h-5 w-5" /> Risk Management
+            <Shield className="h-5 w-5" /> 风控管理
           </CardTitle>
-          <CardDescription>Configure risk limits for trading</CardDescription>
+          <CardDescription>配置交易风控参数</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          <SettingRow
-            label="Max Single Bet"
-            description="Maximum percentage of total balance per trade"
-            defaultValue="10"
-            unit="%"
-          />
+          <SettingRow label="单笔限额" description="单笔交易不超过总资金的百分比" defaultValue="10" unit="%" />
           <Separator />
-          <SettingRow
-            label="Max Daily Loss"
-            description="Stop trading when daily loss exceeds this percentage"
-            defaultValue="5"
-            unit="%"
-          />
+          <SettingRow label="日亏损上限" description="当日亏损超过此比例时暂停交易" defaultValue="5" unit="%" />
           <Separator />
-          <SettingRow
-            label="Max Position Concentration"
-            description="Maximum exposure to a single market"
-            defaultValue="20"
-            unit="%"
-          />
+          <SettingRow label="持仓集中度" description="单个市场的最大持仓占比" defaultValue="20" unit="%" />
           <Separator />
-          <SettingRow
-            label="Min Edge"
-            description="Minimum edge percentage for arbitrage signals"
-            defaultValue="1.0"
-            unit="%"
-          />
+          <SettingRow label="最小边际" description="套利信号的最小利润边际" defaultValue="1.0" unit="%" />
           <Separator />
-          <SettingRow
-            label="Max Positions"
-            description="Maximum number of simultaneous open positions"
-            defaultValue="10"
-          />
+          <SettingRow label="最大持仓数" description="同时持有的最大市场数量" defaultValue="10" />
           <Separator />
-          <SettingRow
-            label="Expiry Buffer"
-            description="Don't open new positions within this many hours of market expiry"
-            defaultValue="24"
-            unit="hrs"
-          />
+          <SettingRow label="到期缓冲" description="市场到期前多少小时内不开新仓" defaultValue="24" unit="时" />
           <div className="pt-4 flex justify-end">
-            <Button>Save Risk Settings</Button>
+            <Button>保存风控设置</Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* API Keys */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Key className="h-5 w-5" /> API Configuration
+            <Key className="h-5 w-5" /> API 配置
           </CardTitle>
-          <CardDescription>Polymarket API credentials (stored in .env)</CardDescription>
+          <CardDescription>Polymarket API 凭证（存储在本地 .env 文件）</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium">API Key</label>
-            <Input type="password" placeholder="Enter your Polymarket API key" className="mt-1" />
+            <label className="text-sm font-medium">API 密钥</label>
+            <Input type="password" placeholder="输入 Polymarket API 密钥" className="mt-1" />
           </div>
           <div>
-            <label className="text-sm font-medium">API Secret</label>
-            <Input type="password" placeholder="Enter your Polymarket API secret" className="mt-1" />
+            <label className="text-sm font-medium">API 秘钥</label>
+            <Input type="password" placeholder="输入 Polymarket API 秘钥" className="mt-1" />
           </div>
           <div>
-            <label className="text-sm font-medium">Private Key</label>
-            <Input type="password" placeholder="Enter your wallet private key" className="mt-1" />
+            <label className="text-sm font-medium">钱包私钥</label>
+            <Input type="password" placeholder="输入钱包私钥" className="mt-1" />
           </div>
           <p className="text-xs text-muted-foreground">
-            Credentials are stored locally in your .env file and never transmitted.
+            凭证仅存储在本地 .env 文件中，不会传输到任何外部服务器。
           </p>
           <div className="flex justify-end">
-            <Button>Save API Settings</Button>
+            <Button>保存 API 设置</Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Notifications */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Bell className="h-5 w-5" /> Notifications
+            <Bell className="h-5 w-5" /> 通知
           </CardTitle>
-          <CardDescription>Configure Telegram notifications (optional)</CardDescription>
+          <CardDescription>配置 Telegram 推送通知（可选）</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium">Telegram Bot Token</label>
-            <Input placeholder="Enter your Telegram bot token" className="mt-1" />
+            <Input placeholder="输入 Telegram 机器人令牌" className="mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">Telegram Chat ID</label>
-            <Input placeholder="Enter your Telegram chat ID" className="mt-1" />
+            <Input placeholder="输入 Telegram 聊天 ID" className="mt-1" />
           </div>
           <div className="flex justify-end">
-            <Button variant="outline">Test Notification</Button>
+            <Button variant="outline">测试通知</Button>
           </div>
         </CardContent>
       </Card>

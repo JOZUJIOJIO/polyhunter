@@ -12,12 +12,12 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/markets", label: "Markets", icon: BarChart3 },
-  { href: "/signals", label: "Signals", icon: Zap },
-  { href: "/positions", label: "Positions", icon: Briefcase },
-  { href: "/history", label: "History", icon: History },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "总览", icon: LayoutDashboard },
+  { href: "/markets", label: "市场", icon: BarChart3 },
+  { href: "/signals", label: "信号", icon: Zap },
+  { href: "/positions", label: "持仓", icon: Briefcase },
+  { href: "/history", label: "历史", icon: History },
+  { href: "/settings", label: "设置", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -27,7 +27,7 @@ export function Sidebar() {
     <aside className="w-64 border-r bg-muted/30 min-h-screen p-4 flex flex-col">
       <div className="mb-8 px-2">
         <h1 className="text-xl font-bold tracking-tight">PolyHunter</h1>
-        <p className="text-xs text-muted-foreground mt-1">Polymarket Trading</p>
+        <p className="text-xs text-muted-foreground mt-1">Polymarket 量化交易</p>
       </div>
       <nav className="space-y-1 flex-1">
         {navItems.map((item) => {
