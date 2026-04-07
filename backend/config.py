@@ -27,8 +27,9 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
 
-    # Phase 2: AI
-    ANTHROPIC_API_KEY: str = ""
+    # Phase 2: AI (via OpenRouter)
+    OPENROUTER_API_KEY: str = ""
+    AI_MODEL: str = "anthropic/claude-sonnet-4"
     AI_EDGE_THRESHOLD_PCT: float = 10.0
     AI_MIN_VOLUME_24H: float = 5000.0
     AI_MIN_LIQUIDITY: float = 1000.0

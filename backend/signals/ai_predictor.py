@@ -4,7 +4,7 @@ import re
 import time
 from datetime import datetime, timezone, timedelta
 
-import anthropic
+import httpx
 from sqlalchemy.orm import Session
 
 from backend.config import Settings
@@ -34,11 +34,16 @@ Current Date: {today}
 Estimate the true probability this resolves YES."""
 
 
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+DEFAULT_MODEL = "anthropic/claude-sonnet-4"
+
+
 class AIPredictorDetector(SignalDetector):
     def __init__(self, session: Session, settings: Settings | None = None):
         super().__init__(session)
         self.settings = settings or Settings()
-        self.client = anthropic.Anthropic(api_key=self.settings.ANTHROPIC_API_KEY)
+        self.api_key = self.settings.OPENROUTER_API_KEY
+        self.model = self.settings.AI_MODEL
 
     def detect(self) -> list[Signal]:
         candidates = self._get_candidate_markets()
@@ -84,15 +89,27 @@ class AIPredictorDetector(SignalDetector):
         prompt = self._build_prompt(market)
 
         try:
-            response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=256,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": prompt}],
+            resp = httpx.post(
+                OPENROUTER_URL,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.model,
+                    "max_tokens": 256,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                },
+                timeout=30,
             )
-            text = response.content[0].text
+            resp.raise_for_status()
+            data = resp.json()
+            text = data["choices"][0]["message"]["content"]
         except Exception as e:
-            logger.warning(f"Claude API error for market {market.id}: {e}")
+            logger.warning(f"AI API error for market {market.id}: {e}")
             return None
 
         ai_result = self._parse_response(text)
@@ -176,7 +193,7 @@ class AIPredictorDetector(SignalDetector):
                 "direction": direction,
                 "confidence": ai_result["confidence"],
                 "reasoning": ai_result["reasoning"],
-                "model": "claude-sonnet-4-20250514",
+                "model": self.model,
             }),
             current_price=market_price,
             fair_value=round(ai_prob, 4),
