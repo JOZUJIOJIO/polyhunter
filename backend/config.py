@@ -42,4 +42,12 @@ class Settings(BaseSettings):
     AUTO_TRADE_MIN_EDGE_PCT: float = 5.0
     AUTO_TRADE_SIZE_USD: float = 5.0
 
+    # BTC 5-minute trading
+    BTC_5M_ENABLED: bool = False
+    BTC_5M_BET_SIZE_USD: float = 5.0
+    BTC_5M_MIN_EDGE_PCT: float = 5.0
+    BTC_5M_ENTRY_SECONDS_BEFORE_END: int = 60
+    BTC_5M_SIMULATIONS: int = 1000
+    PROXY_URL: str = "http://127.0.0.1:7897"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
