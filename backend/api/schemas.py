@@ -90,3 +90,10 @@ class RiskSettingsResponse(BaseModel):
     max_positions: int
     expiry_buffer_hours: int
     fee_pct: float
+
+
+class AutoTradeSettings(BaseModel):
+    enabled: bool
+    min_confidence: int
+    min_edge_pct: float
+    size_usd: float

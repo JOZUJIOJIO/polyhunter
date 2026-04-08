@@ -1,4 +1,4 @@
-import type { Market, Signal, Trade, Position, Overview, TradeRequest } from "./types";
+import type { Market, Signal, Trade, Position, Overview, TradeRequest, AutoTradeSettings } from "./types";
 
 const BASE = "/api";
 
@@ -80,4 +80,16 @@ export async function createTrade(req: TradeRequest): Promise<Trade> {
 // Positions
 export async function getPositions(): Promise<Position[]> {
   return fetchJson<Position[]>("/positions");
+}
+
+// Auto Trade Settings
+export async function getAutoTradeSettings(): Promise<AutoTradeSettings> {
+  return fetchJson<AutoTradeSettings>("/auto-trade");
+}
+
+export async function updateAutoTradeSettings(settings: AutoTradeSettings): Promise<AutoTradeSettings> {
+  return fetchJson<AutoTradeSettings>("/auto-trade", {
+    method: "POST",
+    body: JSON.stringify(settings),
+  });
 }

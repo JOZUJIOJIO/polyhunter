@@ -28,10 +28,12 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 from backend.config import Settings
 from backend.db.database import init_db, get_session_factory
-from backend.db.models import Market, Signal
+from backend.db.models import Market, Signal, Trade
 from backend.crawler.market_crawler import MarketCrawler
 from backend.signals.arbitrage import ArbitrageDetector
 from backend.signals.ai_predictor import AIPredictorDetector
+
+AUTO_TRADE_CONFIG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "auto_trade_config.json")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -99,13 +101,69 @@ def run_scan(settings: Settings):
     else:
         logger.info("第 3 步：跳过 AI 扫描（未配置 OPENROUTER_API_KEY）")
 
-    # 统计
-    total_new = session.query(Signal).filter(Signal.status == "NEW").count()
-    logger.info(f"当前待处理信号: {total_new} 个")
-    logger.info(f"扫描完成")
+    # 4. 自动下单
+    all_new_signals = session.query(Signal).filter(Signal.status == "NEW").all()
+    auto_trade_config = _load_auto_trade_config()
+
+    if auto_trade_config.get("enabled") and all_new_signals:
+        logger.info("第 4 步：自动下单...")
+        min_conf = auto_trade_config.get("min_confidence", 70)
+        min_edge = auto_trade_config.get("min_edge_pct", 5.0)
+        size_usd = auto_trade_config.get("size_usd", 5.0)
+
+        qualified = [
+            s for s in all_new_signals
+            if s.confidence >= min_conf and s.edge_pct >= min_edge
+        ]
+
+        if qualified:
+            logger.info(f"  {len(qualified)} 个信号满足自动下单条件 (置信度>={min_conf}, 边际>={min_edge}%)")
+            for s in qualified:
+                market = session.get(Market, s.market_id)
+                if not market:
+                    continue
+
+                detail = json.loads(s.source_detail) if s.source_detail else {}
+                direction = detail.get("direction", "UNDERPRICED")
+                token_id = market.token_id_yes if direction == "UNDERPRICED" else market.token_id_no
+                price = s.current_price
+                size = round(size_usd / price, 2) if price > 0 else 0
+
+                trade = Trade(
+                    signal_id=s.id,
+                    market_id=s.market_id,
+                    token_id=token_id,
+                    side="BUY",
+                    price=price,
+                    size=size,
+                    cost=round(price * size, 4),
+                    status="PENDING",
+                )
+                session.add(trade)
+                s.status = "ACTED"
+                q = market.question[:40] if market else s.market_id
+                logger.info(f"    下单: {q} | BUY @ ${price:.2f} x {size} = ${price*size:.2f}")
+
+            session.commit()
+            logger.info(f"  已提交 {len(qualified)} 笔订单")
+        else:
+            logger.info(f"  {len(all_new_signals)} 个新信号均未达到自动下单条件")
+    elif not auto_trade_config.get("enabled"):
+        total_new = len(all_new_signals)
+        if total_new > 0:
+            logger.info(f"自动下单: 关闭 (有 {total_new} 个待处理信号，请在设置中开启)")
+
+    logger.info("扫描完成")
     logger.info("")
 
     session.close()
+
+
+def _load_auto_trade_config() -> dict:
+    if os.path.exists(AUTO_TRADE_CONFIG):
+        with open(AUTO_TRADE_CONFIG) as f:
+            return json.load(f)
+    return {"enabled": False, "min_confidence": 70, "min_edge_pct": 5.0, "size_usd": 5.0}
 
 
 def main():

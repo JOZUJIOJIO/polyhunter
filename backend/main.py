@@ -30,12 +30,14 @@ def create_app() -> FastAPI:
     from backend.api.routes.trades import router as trades_router
     from backend.api.routes.positions import router as positions_router
     from backend.api.routes.overview import router as overview_router
+    from backend.api.routes.auto_trade import router as auto_trade_router
 
     app.include_router(markets_router, prefix="/api")
     app.include_router(signals_router, prefix="/api")
     app.include_router(trades_router, prefix="/api")
     app.include_router(positions_router, prefix="/api")
     app.include_router(overview_router, prefix="/api")
+    app.include_router(auto_trade_router, prefix="/api")
 
     return app
 

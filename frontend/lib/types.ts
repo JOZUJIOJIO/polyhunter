@@ -73,3 +73,10 @@ export interface TradeRequest {
   price: number;
   size: number;
 }
+
+export interface AutoTradeSettings {
+  enabled: boolean;
+  min_confidence: number;
+  min_edge_pct: number;
+  size_usd: number;
+}

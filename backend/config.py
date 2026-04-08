@@ -36,4 +36,10 @@ class Settings(BaseSettings):
     AI_MAX_MARKETS_PER_RUN: int = 20
     AI_REQUEST_DELAY_SECONDS: float = 1.0
 
+    # Auto-trade settings
+    AUTO_TRADE_ENABLED: bool = False
+    AUTO_TRADE_MIN_CONFIDENCE: int = 70
+    AUTO_TRADE_MIN_EDGE_PCT: float = 5.0
+    AUTO_TRADE_SIZE_USD: float = 5.0
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
