@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     AUTO_TRADE_MIN_EDGE_PCT: float = 5.0
     AUTO_TRADE_SIZE_USD: float = 5.0
 
+    # Circuit breaker
+    CIRCUIT_BREAKER_CONSECUTIVE_LOSSES: int = 5  # N 笔连亏后熔断
+    CIRCUIT_BREAKER_COOLDOWN_MINUTES: int = 60   # 熔断冷却时间
+
     # BTC 5-minute trading
     BTC_5M_ENABLED: bool = False
     BTC_5M_BET_SIZE_USD: float = 5.0

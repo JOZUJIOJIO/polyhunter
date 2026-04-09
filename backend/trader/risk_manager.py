@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from backend.config import Settings
 from backend.db.models import Market, Position, Trade
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -19,8 +22,14 @@ class RiskManager:
         self.session = session
         self.settings = settings or Settings()
         self.total_balance = total_balance
+        self._circuit_tripped_at: datetime | None = None
 
     def check_order(self, market_id: str, side: str, size: float, price: float) -> RiskCheckResult:
+        # 熔断检查（最先执行）
+        cb_result = self._check_circuit_breaker()
+        if not cb_result.approved:
+            return cb_result
+
         cost = size * price
 
         max_bet = self.total_balance * (self.settings.RISK_MAX_SINGLE_BET_PCT / 100)
@@ -53,6 +62,56 @@ class RiskManager:
             return RiskCheckResult(approved=False, reason=f"Daily loss ${abs(daily_loss):.2f} exceeds limit ${max_loss:.2f} ({self.settings.RISK_MAX_DAILY_LOSS_PCT}%)")
 
         return RiskCheckResult(approved=True)
+
+    def _check_circuit_breaker(self) -> RiskCheckResult:
+        """连续亏损熔断检查"""
+        max_consecutive = self.settings.CIRCUIT_BREAKER_CONSECUTIVE_LOSSES
+        cooldown_minutes = self.settings.CIRCUIT_BREAKER_COOLDOWN_MINUTES
+
+        # 如果已经在冷却期内，检查是否已过冷却时间
+        if self._circuit_tripped_at:
+            elapsed = datetime.now(timezone.utc) - self._circuit_tripped_at
+            if elapsed < timedelta(minutes=cooldown_minutes):
+                remaining = cooldown_minutes - int(elapsed.total_seconds() / 60)
+                return RiskCheckResult(
+                    approved=False,
+                    reason=f"Circuit breaker active: cooling down ({remaining}min remaining)",
+                )
+            else:
+                # 冷却结束，重置
+                logger.info("Circuit breaker cooldown expired, resuming trading")
+                self._circuit_tripped_at = None
+
+        # 查询最近 N 笔已成交的交易
+        recent_trades = (
+            self.session.query(Trade)
+            .filter(Trade.status == "FILLED", Trade.pnl.isnot(None))
+            .order_by(Trade.created_at.desc())
+            .limit(max_consecutive)
+            .all()
+        )
+
+        if len(recent_trades) >= max_consecutive:
+            all_losses = all(t.pnl < 0 for t in recent_trades)
+            if all_losses:
+                self._circuit_tripped_at = datetime.now(timezone.utc)
+                total_loss = sum(t.pnl for t in recent_trades)
+                logger.warning(
+                    f"Circuit breaker TRIPPED: {max_consecutive} consecutive losses "
+                    f"(total ${total_loss:.2f}), pausing for {cooldown_minutes}min"
+                )
+                return RiskCheckResult(
+                    approved=False,
+                    reason=f"Circuit breaker: {max_consecutive} consecutive losses (${total_loss:.2f}), "
+                    f"pausing for {cooldown_minutes}min",
+                )
+
+        return RiskCheckResult(approved=True)
+
+    def is_circuit_breaker_active(self) -> bool:
+        """供外部查询熔断状态"""
+        result = self._check_circuit_breaker()
+        return not result.approved
 
     def _get_market_exposure(self, market_id: str) -> float:
         positions = self.session.query(Position).filter(Position.market_id == market_id).all()
