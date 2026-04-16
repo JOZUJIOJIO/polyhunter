@@ -24,7 +24,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 from backend.config import Settings
 from backend.db.database import init_db, get_session_factory
-from backend.db.models import Market, Signal, Trade
+from backend.db.models import Market, Signal, Trade, Position
 from backend.btc.realtime_feed import get_btc_price, get_btc_klines_1m, compute_realtime_volatility
 from backend.btc.monte_carlo import simulate_price_paths
 from backend.btc.market_finder import find_current_5m_market
@@ -40,6 +40,43 @@ logger = logging.getLogger("btc_5m")
 
 # 统计
 stats = {"rounds": 0, "trades": 0, "skipped": 0, "wins": 0, "losses": 0, "pnl": 0.0}
+
+# 全局 DB（启动时初始化一次）
+_session = None
+
+
+def _get_session(settings: Settings):
+    global _session
+    if _session is None:
+        init_db(settings)
+        Session = get_session_factory(settings)
+        _session = Session()
+    return _session
+
+
+def _get_wallet_balance(settings: Settings, proxy: str | None = None) -> float:
+    """从链上查询 USDC 余额"""
+    import httpx
+    wallet = settings.POLYMARKET_FUNDER
+    if not wallet:
+        return 50.0  # fallback
+    RPC = "https://1rpc.io/matic"
+    USDC_NATIVE = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+    USDC_E = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+    try:
+        cd = "0x70a08231" + wallet[2:].lower().zfill(64)
+        kwargs = {"timeout": 10, "verify": False}
+        r1 = httpx.post(RPC, json={"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": USDC_NATIVE, "data": cd}, "latest"], "id": 1}, **kwargs)
+        r2 = httpx.post(RPC, json={"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": USDC_E, "data": cd}, "latest"], "id": 2}, **kwargs)
+        def safe_int(h):
+            if not h or h == "0x": return 0
+            return int(h, 16)
+        usdc_n = safe_int(r1.json().get("result", "0x0")) / 1e6
+        usdc_e = safe_int(r2.json().get("result", "0x0")) / 1e6
+        total = usdc_n + usdc_e
+        return total if total > 0 else 50.0
+    except Exception:
+        return 50.0
 
 
 def run_one_round(settings: Settings, dry_run: bool = False):
@@ -116,13 +153,14 @@ def run_one_round(settings: Settings, dry_run: bool = False):
     logger.info(f"  预期收盘: ${sim.expected_close:,.2f}")
     logger.info(f"  置信度: {sim.confidence}%")
 
-    # 5. 与市场赔率对比
+    # 5. 与市场赔率对比（扣除手续费）
     market_yes = market["yes_price"]  # 市场认为涨的概率
     market_no = market["no_price"]    # 市场认为跌的概率
+    fee_pct = settings.POLYMARKET_FEE_PCT  # 默认 2%
 
-    # 计算边际
-    edge_yes = sim.prob_up - market_yes    # 正 = YES 被低估
-    edge_no = sim.prob_down - market_no    # 正 = NO 被低估
+    # 计算边际（扣除手续费后的净边际）
+    edge_yes = sim.prob_up - market_yes - fee_pct / 100  # 正 = YES 被低估
+    edge_no = sim.prob_down - market_no - fee_pct / 100  # 正 = NO 被低估
     best_edge = max(edge_yes, edge_no)
     best_side = "YES" if edge_yes >= edge_no else "NO"
     best_edge_pct = best_edge * 100
@@ -154,9 +192,7 @@ def run_one_round(settings: Settings, dry_run: bool = False):
 
     # 7. 执行下单
     try:
-        init_db(settings)
-        Session = get_session_factory(settings)
-        session = Session()
+        session = _get_session(settings)
 
         # 确保市场在 DB 中
         if not session.get(Market, market["market_id"]):
@@ -192,6 +228,7 @@ def run_one_round(settings: Settings, dry_run: bool = False):
                 "volatility": volatility,
                 "seconds_remaining": seconds_remaining,
                 "simulations": settings.BTC_5M_SIMULATIONS,
+                "fee_deducted_pct": fee_pct,
             }),
             current_price=buy_price,
             fair_value=sim.prob_up if best_side == "YES" else sim.prob_down,
@@ -202,8 +239,15 @@ def run_one_round(settings: Settings, dry_run: bool = False):
         session.add(signal)
         session.commit()
 
-        # 执行下单
-        rm = RiskManager(session=session, settings=settings, total_balance=50.0)
+        # 查询真实余额
+        wallet_balance = _get_wallet_balance(settings, proxy)
+        logger.info(f"  钱包余额: ${wallet_balance:.2f}")
+
+        # 5M 市场跳过到期缓冲检查（因为 5M 市场本身就在 5 分钟内到期）
+        saved_expiry = settings.RISK_EXPIRY_BUFFER_HOURS
+        settings.RISK_EXPIRY_BUFFER_HOURS = 0
+
+        rm = RiskManager(session=session, settings=settings, total_balance=wallet_balance)
         executor = OrderExecutor(session=session, risk_manager=rm, settings=settings)
         trade = executor.execute(
             signal_id=signal.id,
@@ -214,15 +258,29 @@ def run_one_round(settings: Settings, dry_run: bool = False):
             size=shares,
         )
 
+        # 恢复到期缓冲
+        settings.RISK_EXPIRY_BUFFER_HOURS = saved_expiry
+
         if trade and trade.status == "FILLED":
             logger.info(f"  订单成交! order_id={trade.order_id}")
             stats["trades"] += 1
+
+            # 创建 Position 记录
+            pos = Position(
+                market_id=market["market_id"],
+                token_id=token_id,
+                side=best_side,
+                avg_entry_price=buy_price,
+                size=shares,
+                current_price=buy_price,
+                unrealized_pnl=0.0,
+            )
+            session.add(pos)
+            session.commit()
         elif trade and trade.status == "CANCELLED":
             logger.info(f"  订单失败（可能被地区限制）")
         else:
             logger.info(f"  订单被风控拒绝")
-
-        session.close()
 
     except Exception as e:
         logger.error(f"  下单异常: {e}")
