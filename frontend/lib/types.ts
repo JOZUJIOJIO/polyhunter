@@ -80,3 +80,59 @@ export interface AutoTradeSettings {
   min_edge_pct: number;
   size_usd: number;
 }
+
+// ── Bitget types ──
+
+export interface BitgetBalance {
+  [coin: string]: number;
+}
+
+export interface BitgetPosition {
+  symbol: string;
+  side: string;
+  size: number;
+  avg_entry_price: number;
+  current_price: number;
+  unrealized_pnl: number;
+  leverage: number;
+}
+
+export interface BitgetTicker {
+  symbol: string;
+  last_price: number;
+  bid: number;
+  ask: number;
+  high_24h: number;
+  low_24h: number;
+  volume_24h: number;
+}
+
+export interface BitgetTrade {
+  id: number;
+  symbol: string;
+  side: "BUY" | "SELL";
+  order_type: string;
+  price: number;
+  size: number;
+  cost: number;
+  status: string;
+  order_id: string | null;
+  strategy: string | null;
+  pnl: number | null;
+  created_at: string;
+}
+
+export interface BitgetAlert {
+  id: number;
+  symbol: string;
+  type: string;
+  message: string;
+  acknowledged: boolean;
+  created_at: string;
+}
+
+export interface MonitorStatus {
+  running: boolean;
+  symbols: string[];
+  exchange: string;
+}

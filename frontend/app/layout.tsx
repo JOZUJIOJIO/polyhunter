@@ -6,8 +6,8 @@ import { Sidebar } from "@/components/sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PolyHunter - Polymarket 量化交易仪表盘",
-  description: "Polymarket 预测市场量化交易系统",
+  title: "PolyHunter - 量化交易系统",
+  description: "Polymarket + Bitget 量化交易系统",
 };
 
 export default function RootLayout({

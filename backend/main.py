@@ -31,6 +31,8 @@ def create_app() -> FastAPI:
     from backend.api.routes.positions import router as positions_router
     from backend.api.routes.overview import router as overview_router
     from backend.api.routes.auto_trade import router as auto_trade_router
+    from backend.api.routes.bitget import router as bitget_router
+    from backend.api.routes.monitor import router as monitor_router
 
     app.include_router(markets_router, prefix="/api")
     app.include_router(signals_router, prefix="/api")
@@ -38,6 +40,8 @@ def create_app() -> FastAPI:
     app.include_router(positions_router, prefix="/api")
     app.include_router(overview_router, prefix="/api")
     app.include_router(auto_trade_router, prefix="/api")
+    app.include_router(bitget_router, prefix="/api")
+    app.include_router(monitor_router, prefix="/api")
 
     return app
 

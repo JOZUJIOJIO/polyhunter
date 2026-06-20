@@ -23,6 +23,36 @@ class Settings(BaseSettings):
     # Polymarket fee (used in edge calculations)
     POLYMARKET_FEE_PCT: float = 2.0
 
+    # Bitget
+    BITGET_API_KEY: str = ""
+    BITGET_SECRET_KEY: str = ""
+    BITGET_PASSPHRASE: str = ""
+    BITGET_ACCOUNT_TYPE: str = "spot"  # "spot" or "futures"
+    BITGET_SYMBOLS: str = "BTCUSDT,ETHUSDT"  # comma-separated
+    BITGET_DEFAULT_SIZE_USD: float = 5.0
+    BITGET_MAX_POSITION_USD: float = 100.0
+    BITGET_LEVERAGE: int = 1  # 1 = no leverage
+
+    # Bitget auto-trade
+    BITGET_AUTO_TRADE_ENABLED: bool = False
+    BITGET_MIN_CONFIDENCE: int = 60
+    BITGET_MIN_EDGE_PCT: float = 0.5
+    BITGET_STOP_LOSS_PCT: float = 5.0    # 亏损超过 5% 止损
+    BITGET_TAKE_PROFIT_PCT: float = 10.0  # 盈利超过 10% 止盈
+
+    # Price monitor
+    MONITOR_INTERVAL_SECONDS: int = 1
+    MONITOR_ALERT_CHANGE_PCT: float = 2.0
+
+    # Strategies
+    STRATEGY_EMA_FAST: int = 9
+    STRATEGY_EMA_SLOW: int = 21
+    STRATEGY_RSI_PERIOD: int = 14
+    STRATEGY_RSI_OVERBOUGHT: int = 70
+    STRATEGY_RSI_OVERSOLD: int = 30
+    STRATEGY_BB_PERIOD: int = 20
+    STRATEGY_BB_STD: float = 2.0
+
     # Telegram (optional)
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""

@@ -93,3 +93,35 @@ export async function updateAutoTradeSettings(settings: AutoTradeSettings): Prom
     body: JSON.stringify(settings),
   });
 }
+
+// ── Bitget ──
+
+import type { BitgetBalance, BitgetPosition, BitgetTicker, BitgetTrade, BitgetAlert, MonitorStatus } from "./types";
+
+export async function getBitgetBalance(): Promise<BitgetBalance> {
+  const data = await fetchJson<{ balance: BitgetBalance }>("/bitget/balance");
+  return data.balance;
+}
+
+export async function getBitgetPositions(): Promise<BitgetPosition[]> {
+  const data = await fetchJson<{ positions: BitgetPosition[] }>("/bitget/positions");
+  return data.positions;
+}
+
+export async function getBitgetTicker(symbol: string): Promise<BitgetTicker> {
+  return fetchJson<BitgetTicker>(`/bitget/ticker/${symbol}`);
+}
+
+export async function getBitgetTrades(limit: number = 50): Promise<BitgetTrade[]> {
+  const data = await fetchJson<{ trades: BitgetTrade[] }>(`/bitget/trades?limit=${limit}`);
+  return data.trades;
+}
+
+export async function getBitgetAlerts(limit: number = 50): Promise<BitgetAlert[]> {
+  const data = await fetchJson<{ alerts: BitgetAlert[] }>(`/bitget/alerts?limit=${limit}`);
+  return data.alerts;
+}
+
+export async function getMonitorStatus(): Promise<MonitorStatus> {
+  return fetchJson<MonitorStatus>("/monitor/status");
+}
